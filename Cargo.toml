@@ -1,0 +1,16 @@
+[package]
+name = "bevy_query_service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy_app = "0.15.1"
+bevy_ecs = "0.15.1"
+bevy_log = "0.15.1"
+bevy_time = "0.15.1"
+uuid = "1.12.1"
+
+[dev-dependencies]
+bevy = "0.15.1"
+bevy_egui = "0.32.0"
+rand = "0.9.0"
