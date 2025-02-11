@@ -92,10 +92,10 @@ pub fn run_query_server_with_supplement<T, U, V>(
 /// `T` is the query request content
 /// `U` is the query reply content
 /// `V` is the additional query that the server can use to calculate the reply
-pub fn run_query_server_with_two_supplements<T, U, V, W>(
+pub fn run_query_server_with_parent<T, U, V, W>(
     mut query_queries: Query<(&mut GoalComponent, &QueryRequest<T>, &mut QueryReply<U>), (With<GoalComponent>, With<QueryRequest<T>>, With<QueryReply<U>>)>,
-    supplementary_1_queries: Query<&V, With<V>>,
-    supplementary_2_queries: Query<&W, With<W>>,
+    parent_queries: Query<(Entity, &V), With<V>>,
+    child_queries: Query<(&bevy_hierarchy::Parent, Entity, &W), With<W>>,
 ) where
     T: Send + Sync + 'static,
     U: QueryReplyOpsTriple<T, V, W> + Send + Sync + 'static,
@@ -108,7 +108,7 @@ pub fn run_query_server_with_two_supplements<T, U, V, W>(
             continue;
         }
 
-        match  U::get_reply(request, &supplementary_1_queries, &supplementary_2_queries) {
+        match  U::get_reply(request, &parent_queries, &child_queries) {
             Ok(r) => reply.reply = r,
             Err(_) => {
                 error!("[{:?}]: Failed to get reply", goal.uuid);
