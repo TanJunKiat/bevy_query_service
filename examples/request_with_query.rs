@@ -31,7 +31,7 @@ struct FriendAge(i32);
 struct TotalAge(i32);
 
 impl QueryReplyOpsDouble<MyAge, FriendAge> for TotalAge {
-    fn get_reply(request: &QueryRequest<MyAge>, supplementary_queries: &Query<&FriendAge, With<FriendAge>>) -> Result<Self,()> {
+    fn get_reply(request: &QueryRequest<MyAge>, supplementary_queries: &Query<&FriendAge, With<FriendAge>>) -> Result<Self, ()> {
         let mut total_age = request.request.0;
         for friend_age in supplementary_queries.iter() {
             total_age += friend_age.0;

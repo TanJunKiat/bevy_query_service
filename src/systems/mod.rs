@@ -76,7 +76,7 @@ pub fn run_query_server_with_supplement<T, U, V>(
             continue;
         }
 
-        match  U::get_reply(request, &supplementary_queries) {
+        match U::get_reply(request, &supplementary_queries) {
             Ok(r) => reply.reply = r,
             Err(_) => {
                 error!("[{:?}]: Failed to get reply", goal.uuid);
@@ -108,7 +108,7 @@ pub fn run_query_server_with_parent<T, U, V, W>(
             continue;
         }
 
-        match  U::get_reply(request, &parent_queries, &child_queries) {
+        match U::get_reply(request, &parent_queries, &child_queries) {
             Ok(r) => reply.reply = r,
             Err(_) => {
                 error!("[{:?}]: Failed to get reply", goal.uuid);
@@ -118,6 +118,35 @@ pub fn run_query_server_with_parent<T, U, V, W>(
 
         goal.is_completed = true;
         info!("[{:?}]: Goal is completed", goal.uuid);
+    }
+}
+
+/// `T` is the query request content
+/// `U` is the query reply content
+pub fn run_query_server_with_world<T, U>(world: &mut World)
+where
+    T: Send + Sync + 'static + Clone,
+    U: QueryReplyOpsWorld<T> + Send + Sync + 'static + Clone,
+{
+    let mut entities = Vec::new();
+
+    // let mut world = world_arc.lock().unwrap();
+    let mut query_queries = world.query_filtered::<(Entity, &mut GoalComponent, &QueryRequest<T>, &mut QueryReply<U>), (With<GoalComponent>, With<QueryRequest<T>>, With<QueryReply<U>>)>();
+
+    for (entity, goal, request, mut reply) in query_queries.iter_mut(world) {
+        if goal.is_completed {
+            debug!("[{:?}]: Goal is already completed", goal.uuid);
+            continue;
+        }
+        entities.push((entity, goal.clone(), request.clone()));
+    }
+
+    for (entity, goal, request) in entities.iter_mut() {
+        let reply = U::get_reply(world, request);
+        goal.is_completed = true;
+        info!("[{:?}]: Goal is completed", goal.uuid);
+
+        world.get_entity_mut(*entity).unwrap().insert((goal.clone(), QueryReply { reply: reply }));
     }
 }
 

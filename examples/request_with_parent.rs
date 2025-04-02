@@ -24,22 +24,29 @@ use bevy_query_service::*;
 struct NameRequest;
 
 #[derive(Component, Clone, Default, Debug)]
-struct ParentComponent{last_name: String}
+struct ParentComponent {
+    last_name: String,
+}
 
 #[derive(Component, Clone, Default, Debug)]
-struct ChildComponent{first_name: String}
+struct ChildComponent {
+    first_name: String,
+}
 
 #[derive(Component, Clone, Default, Debug)]
 struct FullName(String);
 
 impl QueryReplyOpsTriple<NameRequest, ParentComponent, ChildComponent> for FullName {
-    fn get_reply(_request: &QueryRequest<NameRequest>, parent_queries: &Query<(Entity, &ParentComponent), With<ParentComponent>>, child_queries: &Query<(&bevy_hierarchy::Parent, Entity, &ChildComponent), With<ChildComponent>>) -> Result<Self,()> {
-        
+    fn get_reply(
+        _request: &QueryRequest<NameRequest>,
+        parent_queries: &Query<(Entity, &ParentComponent), With<ParentComponent>>,
+        child_queries: &Query<(&bevy_hierarchy::Parent, Entity, &ChildComponent), With<ChildComponent>>,
+    ) -> Result<Self, ()> {
         for (parent_entity, _, child_component) in child_queries.iter() {
-            match parent_queries.get(**parent_entity){
+            match parent_queries.get(**parent_entity) {
                 Ok((_, parent_component)) => {
                     return Ok(FullName(format!("{} {}", child_component.first_name, parent_component.last_name)));
-                },
+                }
                 Err(_) => {
                     return Err(());
                 }
@@ -67,9 +74,9 @@ fn main() {
     app.run();
 }
 
-fn spawn_parent_child(mut commands: Commands){
-    let parent = commands.spawn((ParentComponent{last_name: "Smith".into()},)).id();
-    let child = commands.spawn((ChildComponent{first_name: "John".into()},)).id();
+fn spawn_parent_child(mut commands: Commands) {
+    let parent = commands.spawn((ParentComponent { last_name: "Smith".into() },)).id();
+    let child = commands.spawn((ChildComponent { first_name: "John".into() },)).id();
     commands.entity(parent).add_child(child);
 }
 
