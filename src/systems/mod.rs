@@ -41,99 +41,17 @@ where
 
 /// `T` is the query request content
 /// `U` is the query reply content
-pub fn run_query_server<T, U>(mut query_queries: Query<(&mut GoalComponent, &QueryRequest<T>, &mut QueryReply<U>), (With<GoalComponent>, With<QueryRequest<T>>, With<QueryReply<U>>)>)
-where
-    T: Send + Sync + 'static,
-    U: QueryReplyOpsSingle<T> + Send + Sync + 'static,
-{
-    for (mut goal, request, mut reply) in query_queries.iter_mut() {
-        if goal.is_completed {
-            debug!("[{:?}]: Goal is already completed", goal.uuid);
-            continue;
-        }
-
-        reply.reply = U::get_reply(request);
-
-        goal.is_completed = true;
-        info!("[{:?}]: Goal is completed", goal.uuid);
-    }
-}
-
-/// `T` is the query request content
-/// `U` is the query reply content
-/// `V` is the additional query that the server can use to calculate the reply
-pub fn run_query_server_with_supplement<T, U, V>(
-    mut query_queries: Query<(&mut GoalComponent, &QueryRequest<T>, &mut QueryReply<U>), (With<GoalComponent>, With<QueryRequest<T>>, With<QueryReply<U>>)>,
-    supplementary_queries: Query<&V, With<V>>,
-) where
-    T: Send + Sync + 'static,
-    U: QueryReplyOpsDouble<T, V> + Send + Sync + 'static,
-    V: Component,
-{
-    for (mut goal, request, mut reply) in query_queries.iter_mut() {
-        if goal.is_completed {
-            debug!("[{:?}]: Goal is already completed", goal.uuid);
-            continue;
-        }
-
-        match U::get_reply(request, &supplementary_queries) {
-            Ok(r) => reply.reply = r,
-            Err(_) => {
-                error!("[{:?}]: Failed to get reply", goal.uuid);
-                continue;
-            }
-        }
-
-        goal.is_completed = true;
-        info!("[{:?}]: Goal is completed", goal.uuid);
-    }
-}
-
-/// `T` is the query request content
-/// `U` is the query reply content
-/// `V` is the additional query that the server can use to calculate the reply
-pub fn run_query_server_with_parent<T, U, V, W>(
-    mut query_queries: Query<(&mut GoalComponent, &QueryRequest<T>, &mut QueryReply<U>), (With<GoalComponent>, With<QueryRequest<T>>, With<QueryReply<U>>)>,
-    parent_queries: Query<(Entity, &V), With<V>>,
-    child_queries: Query<(&bevy_hierarchy::Parent, Entity, &W), With<W>>,
-) where
-    T: Send + Sync + 'static,
-    U: QueryReplyOpsTriple<T, V, W> + Send + Sync + 'static,
-    V: Component,
-    W: Component,
-{
-    for (mut goal, request, mut reply) in query_queries.iter_mut() {
-        if goal.is_completed {
-            debug!("[{:?}]: Goal is already completed", goal.uuid);
-            continue;
-        }
-
-        match U::get_reply(request, &parent_queries, &child_queries) {
-            Ok(r) => reply.reply = r,
-            Err(_) => {
-                error!("[{:?}]: Failed to get reply", goal.uuid);
-                continue;
-            }
-        }
-
-        goal.is_completed = true;
-        info!("[{:?}]: Goal is completed", goal.uuid);
-    }
-}
-
-/// `T` is the query request content
-/// `U` is the query reply content
-pub fn run_query_server_with_world<T, U>(world: &mut World)
+pub fn run_query_server<T, U>(world: &mut World)
 where
     T: Send + Sync + 'static + Clone,
-    U: QueryReplyOpsWorld<T> + Send + Sync + 'static + Clone,
+    U: QueryReplyOps<T> + Send + Sync + 'static + Clone,
 {
     let mut entities = Vec::new();
 
     // let mut world = world_arc.lock().unwrap();
-    let mut query_queries = world.query_filtered::<(Entity, &mut GoalComponent, &QueryRequest<T>, &mut QueryReply<U>), (With<GoalComponent>, With<QueryRequest<T>>, With<QueryReply<U>>)>();
+    let mut query_queries = world.query_filtered::<(Entity, &mut GoalComponent, &QueryRequest<T>), (With<GoalComponent>, With<QueryRequest<T>>)>();
 
-    for (entity, goal, request, mut reply) in query_queries.iter_mut(world) {
+    for (entity, goal, request) in query_queries.iter_mut(world) {
         if goal.is_completed {
             debug!("[{:?}]: Goal is already completed", goal.uuid);
             continue;

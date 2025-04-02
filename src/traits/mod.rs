@@ -18,30 +18,6 @@
 // =========================================================================
 use super::*;
 
-pub trait QueryFeedbackOpsSingle<T> {
-    fn is_completed(&self) -> bool;
-    fn increment_feedback(&mut self) -> T;
-}
-
-pub trait QueryReplyOpsSingle<T> {
-    fn get_reply(request: &QueryRequest<T>) -> Self;
-}
-
-pub trait QueryReplyOpsWorld<T> {
+pub trait QueryReplyOps<T> {
     fn get_reply(world: &mut World, request: &QueryRequest<T>) -> Self;
-}
-
-pub trait QueryReplyOpsDouble<T, U>: Sized
-where
-    U: Component,
-{
-    fn get_reply(request: &QueryRequest<T>, supplementary_queries: &Query<&U, With<U>>) -> Result<Self, ()>;
-}
-
-pub trait QueryReplyOpsTriple<T, U, V>: Sized
-where
-    U: Component,
-    V: Component,
-{
-    fn get_reply(request: &QueryRequest<T>, parent_queries: &Query<(Entity, &U), With<U>>, child_queries: &Query<(&bevy_hierarchy::Parent, Entity, &V), With<V>>) -> Result<Self, ()>;
 }

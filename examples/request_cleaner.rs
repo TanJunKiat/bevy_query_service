@@ -26,8 +26,8 @@ struct Ping;
 #[derive(Component, Clone, Default, Debug)]
 struct Pong(bool);
 
-impl QueryReplyOpsSingle<Ping> for Pong {
-    fn get_reply(_request: &QueryRequest<Ping>) -> Self {
+impl QueryReplyOps<Ping> for Pong {
+    fn get_reply(_world: &mut World, _request: &QueryRequest<Ping>) -> Self {
         Pong(true)
     }
 }

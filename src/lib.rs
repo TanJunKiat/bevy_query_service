@@ -30,7 +30,7 @@ pub use traits::*;
 pub struct QueryServicePlugin;
 
 impl Plugin for QueryServicePlugin {
-    fn build(&self, app: &mut App) {
+    fn build(&self, _app: &mut App) {
         // add things to your app here
     }
 }
