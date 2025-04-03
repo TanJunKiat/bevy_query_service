@@ -152,7 +152,7 @@ fn request_panel(mut contexts: EguiContexts, mut reply_queries: Query<(&mut Goal
                     ui.label(format!("Fruit count: {:?}", query.reply.0));
                     if ui.button("Delete").clicked() {
                         info!("Deleting request...");
-                        goal.to_delete = true;
+                        goal.mark_to_delete();
                     }
                 });
             }

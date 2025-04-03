@@ -41,8 +41,40 @@ pub struct QueryFeedback<T> {
 
 #[derive(Component, Debug, Clone, Default)]
 pub struct GoalComponent {
-    pub uuid: uuid::Uuid,
-    pub is_completed: bool,
-    pub to_delete: bool,
-    pub timer: bevy_time::Stopwatch,
+    uuid: uuid::Uuid,
+    is_completed: bool,
+    to_delete: bool,
+    timer: bevy_time::Stopwatch,
 }
+
+impl GoalComponent{
+    pub fn new(uuid: uuid::Uuid) -> Self {
+        Self {
+            uuid,
+            is_completed: false,
+            to_delete: false,
+            timer: bevy_time::Stopwatch::new(),
+        }
+    }
+
+    pub fn get_uuid(&self) -> uuid::Uuid {
+        self.uuid
+    }
+
+    pub fn mark_completed(&mut self) {
+        self.is_completed = true;
+    }
+
+    pub fn is_completed(&self) -> bool {
+        self.is_completed
+    }
+
+    pub fn mark_to_delete(&mut self) {
+        self.to_delete = true;
+    }
+
+    pub fn is_to_delete(&self) -> bool {
+        self.to_delete
+    }
+}
+

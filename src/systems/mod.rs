@@ -28,10 +28,7 @@ where
 {
     for event in events.read() {
         commands.spawn((
-            GoalComponent {
-                uuid: event.uuid,
-                ..Default::default()
-            },
+            GoalComponent::new(event.uuid),
             QueryRequest { request: event.request.clone() },
             QueryReply::<U>::default(),
         ));
@@ -50,13 +47,13 @@ where
     let mut query_queries = world.query_filtered::<(Entity, &mut GoalComponent, &QueryRequest<T>), (With<GoalComponent>, With<QueryRequest<T>>)>();
 
     for (entity, goal, request) in query_queries.iter_mut(world) {
-        if goal.is_completed {
-            debug!("[{:?}]: Goal is already completed", goal.uuid);
+        if goal.is_completed() {
+            debug!("[{:?}]: Goal is already completed", goal.get_uuid());
             continue;
         }
 
-        if goal.to_delete {
-            debug!("[{:?}]: Goal is marked for deletion", goal.uuid);
+        if goal.is_to_delete() {
+            debug!("[{:?}]: Goal is marked for deletion", goal.get_uuid());
             continue;
         }
 
@@ -66,13 +63,13 @@ where
     for (entity, goal, request) in entities.iter_mut() {
         match U::get_reply(world, request) {
             Ok(reply) => {
-                info!("[{:?}]: Goal is completed", goal.uuid);
-                goal.is_completed = true;
+                info!("[{:?}]: Goal is completed", goal.get_uuid());
+                goal.mark_completed();
                 world.get_entity_mut(*entity).unwrap().insert((goal.clone(), QueryReply { reply: reply }));
             }
             Err(_) => {
-                error!("[{:?}]: Query reply failed", goal.uuid);
-                goal.to_delete = true;
+                error!("[{:?}]: Query reply failed", goal.get_uuid());
+                goal.mark_to_delete();
             }
         }
     }
@@ -82,9 +79,9 @@ where
 /// todo: implement a timeout check
 pub fn cleanup_requests(mut commands: Commands, queries: Query<(Entity, &GoalComponent), With<GoalComponent>>) {
     for (entity, goal) in queries.iter() {
-        if goal.to_delete {
+        if goal.is_to_delete() {
             commands.entity(entity).despawn();
-            info!("[{:?}]: Request despawned", goal.uuid);
+            info!("[{:?}]: Request despawned", goal.get_uuid());
         }
     }
 }
