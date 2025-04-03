@@ -47,8 +47,6 @@ where
     U: QueryReplyOps<T> + Send + Sync + 'static + Clone,
 {
     let mut entities = Vec::new();
-
-    // let mut world = world_arc.lock().unwrap();
     let mut query_queries = world.query_filtered::<(Entity, &mut GoalComponent, &QueryRequest<T>), (With<GoalComponent>, With<QueryRequest<T>>)>();
 
     for (entity, goal, request) in query_queries.iter_mut(world) {
@@ -56,15 +54,27 @@ where
             debug!("[{:?}]: Goal is already completed", goal.uuid);
             continue;
         }
+
+        if goal.to_delete {
+            debug!("[{:?}]: Goal is marked for deletion", goal.uuid);
+            continue;
+        }
+
         entities.push((entity, goal.clone(), request.clone()));
     }
 
     for (entity, goal, request) in entities.iter_mut() {
-        let reply = U::get_reply(world, request);
-        goal.is_completed = true;
-        info!("[{:?}]: Goal is completed", goal.uuid);
-
-        world.get_entity_mut(*entity).unwrap().insert((goal.clone(), QueryReply { reply: reply }));
+        match U::get_reply(world, request) {
+            Ok(reply) => {
+                info!("[{:?}]: Goal is completed", goal.uuid);
+                goal.is_completed = true;
+                world.get_entity_mut(*entity).unwrap().insert((goal.clone(), QueryReply { reply: reply }));
+            }
+            Err(_) => {
+                error!("[{:?}]: Query reply failed", goal.uuid);
+                goal.to_delete = true;
+            }
+        }
     }
 }
 

@@ -27,8 +27,8 @@ struct Ping;
 struct Pong(bool);
 
 impl QueryReplyOps<Ping> for Pong {
-    fn get_reply(_world: &mut World, _request: &QueryRequest<Ping>) -> Self {
-        Pong(true)
+    fn get_reply(_world: &mut World, _request: &QueryRequest<Ping>) -> Result<Self, ()> {
+        Ok(Pong(true))
     }
 }
 

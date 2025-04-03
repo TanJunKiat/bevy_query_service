@@ -67,7 +67,7 @@ fn spawn_fruits(mut commands: Commands) {
 }
 
 impl QueryReplyOps<Request> for Reply {
-    fn get_reply(world: &mut World, request: &QueryRequest<Request>) -> Reply {
+    fn get_reply(world: &mut World, request: &QueryRequest<Request>) -> Result<Self, ()> {
         match request.request.0 {
             Fruit::Apple => {
                 let mut apples = world.query_filtered::<&Apple, With<Apple>>();
@@ -75,7 +75,7 @@ impl QueryReplyOps<Request> for Reply {
                 for apple in apples.iter(world) {
                     count = count + apple.0;
                 }
-                return Reply(count as i32);
+                return Ok(Reply(count as i32));
             }
             Fruit::Banana => {
                 let mut bananas = world.query_filtered::<&Banana, With<Banana>>();
@@ -83,7 +83,7 @@ impl QueryReplyOps<Request> for Reply {
                 for banana in bananas.iter(world) {
                     count = count + banana.0;
                 }
-                return Reply(count as i32);
+                return Ok(Reply(count as i32));
             }
             Fruit::Orange => {
                 let mut oranges = world.query_filtered::<&Orange, With<Orange>>();
@@ -91,7 +91,7 @@ impl QueryReplyOps<Request> for Reply {
                 for orange in oranges.iter(world) {
                     count = count + orange.0;
                 }
-                return Reply(count as i32);
+                return Ok(Reply(count as i32));
             }
         }
     }

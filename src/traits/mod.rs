@@ -19,5 +19,7 @@
 use super::*;
 
 pub trait QueryReplyOps<T> {
-    fn get_reply(world: &mut World, request: &QueryRequest<T>) -> Self;
+    fn get_reply(world: &mut World, request: &QueryRequest<T>) -> Result<Self, ()>
+    where
+        Self: Sized;
 }
