@@ -66,7 +66,7 @@ fn spawn_fruits(mut commands: Commands) {
     commands.spawn((Apple(1), Banana(2), Orange(3)));
 }
 
-impl QueryReplyOps<Request> for Reply {
+impl QueryServerOps<Request> for Reply {
     fn get_reply(world: &mut World, request: &QueryRequest<Request>) -> Result<Self, ()> {
         match request.request.0 {
             Fruit::Apple => {

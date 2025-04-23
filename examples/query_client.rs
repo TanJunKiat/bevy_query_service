@@ -21,26 +21,20 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_query_service::*;
 
 #[derive(Component, Clone)]
-struct Ping;
+struct Request;
 
 #[derive(Component, Clone, Default, Debug)]
-struct Pong(bool);
-
-impl QueryServerOps<Ping> for Pong {
-    fn get_reply(_world: &mut World, _request: &QueryRequest<Ping>) -> Result<Self, ()> {
-        Ok(Pong(true))
-    }
-}
+struct Reply(bool);
 
 fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins);
+    app.add_plugins(bevy_tokio_tasks::TokioTasksPlugin::default());
 
     app.add_plugins(QueryServicePlugin);
-
-    app.add_event::<QueryEvent<Ping>>();
-    app.add_systems(Update, spawn_request_endpoint::<Ping, Pong>);
-    app.add_systems(Update, run_query_server::<Ping, Pong>);
+    app.add_event::<QueryEvent<Request>>();
+    app.add_systems(Update, spawn_request_endpoint::<Request, Reply>);
+    app.add_systems(Update, run_query_client::<Request, Reply>);
 
     app.add_plugins(EguiPlugin);
     app.add_systems(Update, interaction_panel);
@@ -48,7 +42,30 @@ fn main() {
     app.run();
 }
 
-fn interaction_panel(mut contexts: EguiContexts, mut query_event_writer: EventWriter<QueryEvent<Ping>>) {
+impl QueryClientOps<Request> for Reply {
+    async fn send_request(_request: &QueryRequest<Request>) -> Result<Self, ()>
+    where
+        Self: Sized,
+    {
+        match reqwest::get("https://google.com").await {
+            Ok(response) => {
+                if response.status().is_success() {
+                    info!("Request successful");
+                    return Ok(Reply(true));
+                } else {
+                    error!("Request failed");
+                    return Err(());
+                }
+            }
+            Err(_) => {
+                error!("Request failed");
+                return Err(());
+            }
+        }
+    }
+}
+
+fn interaction_panel(mut contexts: EguiContexts, mut query_event_writer: EventWriter<QueryEvent<Request>>) {
     let ctx = contexts.ctx_mut();
 
     egui::SidePanel::left("left_panel")
@@ -56,13 +73,14 @@ fn interaction_panel(mut contexts: EguiContexts, mut query_event_writer: EventWr
         .show(ctx, |ui| {
             ui.label("Interaction");
             ui.horizontal(|ui| {
-                if ui.button("Send query request").clicked() {
+                if ui.button("Send request to google").clicked() {
                     query_event_writer.send(QueryEvent {
                         uuid: uuid::Uuid::new_v4(),
-                        request: Ping,
+                        request: Request,
                     });
                 }
             });
+            ui.separator();
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })
         .response
@@ -70,15 +88,21 @@ fn interaction_panel(mut contexts: EguiContexts, mut query_event_writer: EventWr
         .width();
 }
 
-fn request_panel(mut contexts: EguiContexts, reply_queries: Query<&QueryReply<Pong>, With<QueryReply<Pong>>>) {
+fn request_panel(mut contexts: EguiContexts, mut reply_queries: Query<(&mut GoalComponent, &QueryReply<Reply>), With<QueryReply<Reply>>>) {
     let ctx = contexts.ctx_mut();
 
     egui::SidePanel::right("right_panel")
         .resizable(true)
         .show(ctx, |ui| {
             ui.label("Requests");
-            for query in reply_queries.iter() {
-                ui.label(format!("Request: {:?}", query.reply.0));
+            for (mut goal, query) in reply_queries.iter_mut() {
+                ui.horizontal(|ui| {
+                    ui.label(format!("Google status: {:?}", query.reply.0));
+                    if ui.button("Delete").clicked() {
+                        info!("Deleting request...");
+                        goal.mark_to_delete();
+                    }
+                });
             }
             ui.allocate_rect(ui.available_rect_before_wrap(), egui::Sense::hover());
         })

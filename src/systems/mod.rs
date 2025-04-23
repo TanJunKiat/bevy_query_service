@@ -27,11 +27,7 @@ where
     U: Default + Send + Sync + 'static,
 {
     for event in events.read() {
-        commands.spawn((
-            GoalComponent::new(event.uuid),
-            QueryRequest { request: event.request.clone() },
-            QueryReply::<U>::default(),
-        ));
+        commands.spawn((GoalComponent::new(event.uuid), QueryRequest { request: event.request.clone() }, QueryReply::<U>::default()));
         info!("[{:?}]: Request spawned", event.uuid);
     }
 }
@@ -41,12 +37,17 @@ where
 pub fn run_query_server<T, U>(world: &mut World)
 where
     T: Send + Sync + 'static + Clone,
-    U: QueryReplyOps<T> + Send + Sync + 'static + Clone,
+    U: QueryServerOps<T> + Send + Sync + 'static + Clone,
 {
     let mut entities = Vec::new();
     let mut query_queries = world.query_filtered::<(Entity, &mut GoalComponent, &QueryRequest<T>), (With<GoalComponent>, With<QueryRequest<T>>)>();
 
-    for (entity, goal, request) in query_queries.iter_mut(world) {
+    for (entity, mut goal, request) in query_queries.iter_mut(world) {
+        if goal.is_executing() {
+            debug!("[{:?}]: Goal is already executing", goal.get_uuid());
+            continue;
+        }
+
         if goal.is_completed() {
             debug!("[{:?}]: Goal is already completed", goal.get_uuid());
             continue;
@@ -56,6 +57,8 @@ where
             debug!("[{:?}]: Goal is marked for deletion", goal.get_uuid());
             continue;
         }
+
+        goal.mark_executing();
 
         entities.push((entity, goal.clone(), request.clone()));
     }
@@ -83,5 +86,59 @@ pub fn cleanup_requests(mut commands: Commands, queries: Query<(Entity, &GoalCom
             commands.entity(entity).despawn();
             info!("[{:?}]: Request despawned", goal.get_uuid());
         }
+    }
+}
+
+use bevy_tokio_tasks::TokioTasksRuntime;
+pub fn run_query_client<T, U>(runtime: ResMut<TokioTasksRuntime>, mut query_queries: Query<(Entity, &mut GoalComponent, &QueryRequest<T>), (With<GoalComponent>, With<QueryRequest<T>>)>)
+where
+    T: Send + Sync + 'static + Clone,
+    U: QueryClientOps<T> + Send + Sync + 'static + Clone,
+{
+    let mut entities = Vec::new();
+    for (entity, mut goal, request) in query_queries.iter_mut() {
+        if goal.is_executing() {
+            debug!("[{:?}]: Goal is already executing", goal.get_uuid());
+            continue;
+        }
+
+        if goal.is_completed() {
+            debug!("[{:?}]: Goal is already completed", goal.get_uuid());
+            continue;
+        }
+        if goal.is_to_delete() {
+            debug!("[{:?}]: Goal is marked for deletion", goal.get_uuid());
+            continue;
+        }
+
+        goal.mark_executing();
+
+        entities.push((entity, goal.clone(), request.clone()));
+    }
+
+    for (entity, goal, request) in entities.iter_mut() {
+        let mut goal = goal.clone();
+        let entity_clone = entity.clone();
+        let request = request.clone();
+        runtime.spawn_background_task(move |mut ctx| async move {
+            match U::send_request(&request).await {
+                Ok(reply) => {
+                    ctx.run_on_main_thread(move |ctx| {
+                        info!("[{:?}]: Goal is completed", goal.get_uuid());
+                        goal.mark_completed();
+                        ctx.world.get_entity_mut(entity_clone).unwrap().insert((goal.clone(), QueryReply { reply: reply }));
+                    })
+                    .await;
+                }
+                Err(_) => {
+                    ctx.run_on_main_thread(move |ctx| {
+                        error!("[{:?}]: Query reply failed", goal.get_uuid());
+                        goal.mark_to_delete();
+                        ctx.world.get_entity_mut(entity_clone).unwrap().insert(goal.clone());
+                    })
+                    .await;
+                }
+            }
+        });
     }
 }

@@ -29,13 +29,13 @@ struct Question2;
 #[derive(Component, Clone, Default, Debug)]
 struct Answer(String);
 
-impl QueryReplyOps<Question1> for Answer {
+impl QueryServerOps<Question1> for Answer {
     fn get_reply(_world: &mut World, _request: &QueryRequest<Question1>) -> Result<Self, ()> {
         Ok(Answer("My answer to question 1.".into()))
     }
 }
 
-impl QueryReplyOps<Question2> for Answer {
+impl QueryServerOps<Question2> for Answer {
     fn get_reply(_world: &mut World, _request: &QueryRequest<Question2>) -> Result<Self, ()> {
         Ok(Answer("My answer to question 2.".into()))
     }

@@ -42,15 +42,17 @@ pub struct QueryFeedback<T> {
 #[derive(Component, Debug, Clone, Default)]
 pub struct GoalComponent {
     uuid: uuid::Uuid,
+    is_executing: bool,
     is_completed: bool,
     to_delete: bool,
     timer: bevy_time::Stopwatch,
 }
 
-impl GoalComponent{
+impl GoalComponent {
     pub fn new(uuid: uuid::Uuid) -> Self {
         Self {
             uuid,
+            is_executing: false,
             is_completed: false,
             to_delete: false,
             timer: bevy_time::Stopwatch::new(),
@@ -61,7 +63,16 @@ impl GoalComponent{
         self.uuid
     }
 
+    pub fn mark_executing(&mut self) {
+        self.is_executing = true;
+    }
+
+    pub fn is_executing(&self) -> bool {
+        self.is_executing
+    }
+
     pub fn mark_completed(&mut self) {
+        self.is_executing = false;
         self.is_completed = true;
     }
 
@@ -70,6 +81,7 @@ impl GoalComponent{
     }
 
     pub fn mark_to_delete(&mut self) {
+        self.is_executing = false;
         self.to_delete = true;
     }
 
@@ -77,4 +89,3 @@ impl GoalComponent{
         self.to_delete
     }
 }
-

@@ -18,8 +18,15 @@
 // =========================================================================
 use super::*;
 
-pub trait QueryReplyOps<T> {
+pub trait QueryServerOps<T> {
     fn get_reply(world: &mut World, request: &QueryRequest<T>) -> Result<Self, ()>
+    where
+        Self: Sized;
+}
+
+pub trait QueryClientOps<T> {
+    // async fn send_request() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self, ()>> + Send>>
+    fn send_request(request: &QueryRequest<T>) -> impl std::future::Future<Output = Result<Self, ()>> + Send
     where
         Self: Sized;
 }
