@@ -43,7 +43,7 @@ fn main() {
 }
 
 impl QueryClientOps<Request> for Reply {
-    async fn send_request(_request: &QueryRequest<Request>) -> Result<Self, ()>
+    async fn send_request(_ctx: &mut bevy_tokio_tasks::TaskContext, _request: &QueryRequest<Request>) -> Result<Self, ()>
     where
         Self: Sized,
     {

@@ -121,7 +121,7 @@ where
         let entity_clone = entity.clone();
         let request = request.clone();
         runtime.spawn_background_task(move |mut ctx| async move {
-            match U::send_request(&request).await {
+            match U::send_request(&mut ctx, &request).await {
                 Ok(reply) => {
                     ctx.run_on_main_thread(move |ctx| {
                         info!("[{:?}]: Goal is completed", goal.get_uuid());

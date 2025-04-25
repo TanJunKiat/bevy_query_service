@@ -26,7 +26,7 @@ pub trait QueryServerOps<T> {
 
 pub trait QueryClientOps<T> {
     // async fn send_request() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self, ()>> + Send>>
-    fn send_request(request: &QueryRequest<T>) -> impl std::future::Future<Output = Result<Self, ()>> + Send
+    fn send_request(ctx: &mut bevy_tokio_tasks::TaskContext, request: &QueryRequest<T>) -> impl std::future::Future<Output = Result<Self, ()>> + Send
     where
         Self: Sized;
 }
