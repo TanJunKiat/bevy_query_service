@@ -19,6 +19,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_query_service::*;
+use anyhow::Result;
 
 #[derive(Component, Clone)]
 struct Ping;
@@ -27,7 +28,7 @@ struct Ping;
 struct Pong(bool);
 
 impl QueryServerOps<Ping> for Pong {
-    fn get_reply(_world: &mut World, _request: &QueryRequest<Ping>) -> Result<Self, ()> {
+    fn get_reply(_world: &mut World, _request: &QueryRequest<Ping>) -> Result<Self> {
         Ok(Pong(true))
     }
 }

@@ -70,8 +70,8 @@ where
                 goal.mark_completed();
                 world.get_entity_mut(*entity).unwrap().insert((goal.clone(), QueryReply { reply: reply }));
             }
-            Err(_) => {
-                error!("[{:?}]: Query reply failed", goal.get_uuid());
+            Err(e) => {
+                error!("[{:?}]: {}", goal.get_uuid(), e);
                 goal.mark_to_delete();
             }
         }
@@ -130,9 +130,9 @@ where
                     })
                     .await;
                 }
-                Err(_) => {
+                Err(e) => {
                     ctx.run_on_main_thread(move |ctx| {
-                        error!("[{:?}]: Query reply failed", goal.get_uuid());
+                        error!("[{:?}]: {}", goal.get_uuid(), e);
                         goal.mark_to_delete();
                         ctx.world.get_entity_mut(entity_clone).unwrap().insert(goal.clone());
                     })

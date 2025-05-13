@@ -6,6 +6,7 @@ license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.98"
 bevy-tokio-tasks = "0.15.0"
 bevy_app = "0.15.1"
 bevy_ecs = "0.15.1"

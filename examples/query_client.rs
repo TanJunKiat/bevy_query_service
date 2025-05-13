@@ -19,6 +19,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_query_service::*;
+use anyhow::Result;
 
 #[derive(Component, Clone)]
 struct Request;
@@ -43,7 +44,7 @@ fn main() {
 }
 
 impl QueryClientOps<Request> for Reply {
-    async fn send_request(_ctx: &mut bevy_tokio_tasks::TaskContext, _request: &QueryRequest<Request>) -> Result<Self, ()>
+    async fn send_request(_ctx: &mut bevy_tokio_tasks::TaskContext, _request: &QueryRequest<Request>) -> Result<Self>
     where
         Self: Sized,
     {
@@ -54,12 +55,12 @@ impl QueryClientOps<Request> for Reply {
                     return Ok(Reply(true));
                 } else {
                     error!("Request failed");
-                    return Err(());
+                    return Err(anyhow::anyhow!("Request failed with status: {}", response.status()));
                 }
             }
-            Err(_) => {
+            Err(e) => {
                 error!("Request failed");
-                return Err(());
+                return Err(anyhow::anyhow!("Request failed with error: {}", e));
             }
         }
     }

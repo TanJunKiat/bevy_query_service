@@ -27,6 +27,8 @@ pub use structs::*;
 pub use systems::*;
 pub use traits::*;
 
+use anyhow::Result;
+
 pub struct QueryServicePlugin;
 
 impl Plugin for QueryServicePlugin {

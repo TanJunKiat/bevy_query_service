@@ -19,6 +19,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_query_service::*;
+use anyhow::Result;
 
 #[derive(Component, Clone)]
 struct Question1;
@@ -30,13 +31,13 @@ struct Question2;
 struct Answer(String);
 
 impl QueryServerOps<Question1> for Answer {
-    fn get_reply(_world: &mut World, _request: &QueryRequest<Question1>) -> Result<Self, ()> {
+    fn get_reply(_world: &mut World, _request: &QueryRequest<Question1>) -> Result<Self> {
         Ok(Answer("My answer to question 1.".into()))
     }
 }
 
 impl QueryServerOps<Question2> for Answer {
-    fn get_reply(_world: &mut World, _request: &QueryRequest<Question2>) -> Result<Self, ()> {
+    fn get_reply(_world: &mut World, _request: &QueryRequest<Question2>) -> Result<Self> {
         Ok(Answer("My answer to question 2.".into()))
     }
 }

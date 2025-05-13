@@ -19,6 +19,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_query_service::*;
+use anyhow::Result;
 
 #[derive(Component, Clone)]
 struct Apple(i32);
@@ -67,7 +68,7 @@ fn spawn_fruits(mut commands: Commands) {
 }
 
 impl QueryServerOps<Request> for Reply {
-    fn get_reply(world: &mut World, request: &QueryRequest<Request>) -> Result<Self, ()> {
+    fn get_reply(world: &mut World, request: &QueryRequest<Request>) -> Result<Self> {
         match request.request.0 {
             Fruit::Apple => {
                 let mut apples = world.query_filtered::<&Apple, With<Apple>>();
